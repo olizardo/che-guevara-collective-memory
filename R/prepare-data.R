@@ -1,10 +1,11 @@
 # Data-wrangling port of the tail of che-dataproc-latest.do (lines 93-131):
-# che_prem.dta (wide, three Latin American figure choices) -> che_final.dta
-# (long, figure coding, and dummy indicators for Che and comparison figures).
+# the pooled wide file (three Latin American figure choices) -> the long
+# analysis file (figure coding, and dummy indicators for Che and comparison
+# figures).
 #
-# The earlier stages of the original do-file (building che_prem.dta from the
-# raw monthly Spain survey files) cannot be re-run from this archive because
-# those raw files are not included; che_prem.dta is shipped as the starting point.
+# Reads data/che_prem_recreated.dta produced by R/dataproc.R, making the
+# pipeline fully self-contained from the raw survey files. The shipped
+# che_prem.dta and che_final.dta are retained only as verification targets.
 
 library(haven)
 
@@ -15,7 +16,20 @@ repo_root <- function() {
 }
 data_dir <- file.path(repo_root(), "data")
 
-prem <- read_dta(file.path(data_dir, "che_prem.dta"))
+prem <- read_dta(file.path(data_dir, "che_prem_recreated.dta"))
+
+# Binary indicators (Stata analysis.do lines 6-7 and 26):
+# left/libertarian postmaterialism priorities; rich/poor world priorities;
+# traditional values "agree" codes
+for (j in 1:3) {
+  prem[[paste0("sppostmat", j, "bin")]] <- as.integer(
+    prem[[paste0("sppostmat", j)]] %in% c(1, 3, 4, 8))
+  prem[[paste0("wrldpostmat", j, "bin")]] <- as.integer(
+    prem[[paste0("wrldpostmat", j)]] %in% c(1, 2, 4, 9))
+}
+for (j in 1:10) {
+  prem[[paste0("tradval", j, "bin")]] <- as.integer(prem[[paste0("tradval", j)]] <= 2)
+}
 
 lp <- grep("^latinperson[0-9]+$", names(prem), value = TRUE)
 prem$idnum <- seq_len(nrow(prem))

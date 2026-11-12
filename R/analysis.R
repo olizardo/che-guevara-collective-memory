@@ -1,7 +1,8 @@
 # R port of che-analysis.do
 # Larson & Lizardo (2007), Sociological Forum 22(4)
-# Runs on data/che_final.dta (the output of the original Stata processing step;
-# the raw source files referenced by che-dataproc-latest.do are not in this archive).
+# Runs on data/che_final_recreated.dta, produced by R/dataproc.R +
+# R/prepare-data.R from the raw survey files. The shipped che_final.dta is
+# retained only as a verification target.
 
 library(haven)
 library(MASS)      # corresp: correspondence analysis (Stata ca)
@@ -18,7 +19,7 @@ repo_root <- function() {
     file.path(getwd())  # assume working dir is repo root
 }
 data_dir <- file.path(repo_root(), "data")
-che <- read_dta(file.path(data_dir, "che_final.dta"))
+che <- read_dta(file.path(data_dir, "che_final_recreated.dta"))
 
 fig_names <- c("Fidel Castro", "Carlos Menem", "Pinochet", "Peron",
                "Raul Alfonsin", "Simon Bolivar", "Mario Vargas Llosa",
@@ -29,10 +30,10 @@ fig_names <- c("Fidel Castro", "Carlos Menem", "Pinochet", "Peron",
 # Correspondence-analysis row scores: Stata `ca X cohort10, norm(row)`
 # followed by `predict caX, rowscore(1)`.
 # ---------------------------------------------------------------- #
-ca_rowscore <- function(x, cohort10) {
-  x <- as.integer(x); cohort10 <- as.integer(cohort10)
-  d <- complete.cases(x, cohort10)
-  ct <- table(x[d], cohort10[d])
+ca_rowscore <- function(x, y) {
+  x <- as.integer(x); y <- as.integer(y)
+  d <- complete.cases(x, y)
+  ct <- table(x[d], y[d])
   res <- corresp(as.matrix(unclass(ct)), nf = 1)
   # corresp returns both row and column principal coordinates scaled to
   # unit total inertia; rowscore(1) uses the row score on the first axis.
@@ -70,6 +71,11 @@ rsum2 <- function(df) {
 che$postmatscal <- rsum2(che[paste0("ca", unlist(ca_blocks[1:2]))])
 che$postmatscalbin <- rsum2(che[spp_bin])
 
+# Centered cohort variables (Stata: center cohort cohort5 cohort10)
+for (v in c("cohort", "cohort5", "cohort10")) {
+  che[[paste0("c", v)]] <- che[[v]] - mean(che[[v]], na.rm = TRUE)
+}
+
 # ---------------------------------------------------------------- #
 # Traditionalism factor: tetrachoric correlation of binary
 # traditional values, principal-component factor scores
@@ -90,11 +96,23 @@ fscores <- function(X, R, k = 1) {
   sc
 }
 che$tradfacbin <- fscores(as.matrix(che[tv_bin]), tc$rho)[, 1]
+# The do-file's tradfac comes from a factor analysis of polychoric-based CA
+# scores (catradval2-catradval7) not reproducible from the shipped files;
+# the tetrachoric factor scores are used in its place. Table III models
+# standardize this score, so the substitution does not affect them.
+che$tradfac <- che$tradfacbin
 
 # ---------------------------------------------------------------- #
-# Regional identity score: ca region ethid
+# Regional identity score (Stata: ca region ethid, norm(row); predict caregid)
+# Correspondence analysis of the region-by-ethnicity table.
 # ---------------------------------------------------------------- #
-che$caregid <- ca_rowscore(che$region, che$cohort10)
+che$caregid <- ca_rowscore(che$region, che$ethid)
+# Sign-aligned to the published direction and standardized (mean 0, sd 1).
+# The shipped che_final.dta carries the original Stata regid, which
+# correlates 0.95 with this score but is not an exact scalar multiple of it
+# (it was computed on a slightly different version of the data); the
+# standardized score is used so the R pipeline is fully self-contained.
+che$caregid <- as.numeric(-scale(che$caregid))
 
 # ---------------------------------------------------------------- #
 # Missingness flag (Stata: gen miss; 1 if any model covariate missing).
@@ -192,7 +210,7 @@ ok <- complete.cases(ca6)
 R6 <- cor(as.matrix(ca6[ok, ]))
 che$postmatfac <- -fscores(as.matrix(ca6), R6)[, 1]  # Stata: replace X = X*-1
 
-che$ccohort_c <- che$ccohort  # Stata second block uses c_cohort (already centered)
+che$ccohort_c <- che$cohort - mean(che$cohort, na.rm = TRUE)  # Stata: center cohort
 
 miss_vars <- c("ccohort10", "yearvar", "numchoices", "tradfac", "postmatfac",
                "educrec", "polcat", "caregid")
@@ -216,11 +234,11 @@ t3$tradfac_z <- as.numeric(scale(t3$tradfac))
 
 cat("\n--- Table III: logistic regression coefficients for remembering Che ---\n")
 cat("N =", sum(complete.cases(t3[c("che", "ccohort10", "yearvar", "numchoices",
-                                    "postmat", "tradfac_z", "educ", "regid", "polcat")])), "\n")
+                                    "postmat", "tradfac_z", "educ", "caregid", "polcat")])), "\n")
 t3_1 <- robust_logit(che ~ ccohort10 + yearvar + numchoices, t3)
 t3_2 <- update(t3_1, . ~ . + postmat + tradfac_z)
 t3_3 <- update(t3_2, . ~ . + educ)
-t3_4 <- update(t3_3, . ~ . + regid + factor(polcat))
+t3_4 <- update(t3_3, . ~ . + caregid + factor(polcat))
 for (mm in list(t3_1, t3_2, t3_3, t3_4)) show_fit(mm)
 
 # ---------------------------------------------------------------- #
