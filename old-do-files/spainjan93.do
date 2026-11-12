@@ -1,0 +1,45 @@
+use "Z:\spain\spainjan93.dta", clear
+for var _all: lab var X " "
+ren  a27 sppostmat1
+ren  a29 sppostmat2
+ren  a31 sppostmat3
+ren  a51 geoid 
+ren  a52 passport
+ren  a39 wrldpostmat1
+ren  a41 wrldpostmat2
+ren  a43 wrldpostmat3
+ren  a55 tradval1
+ren  a56 tradval2
+ren  a57 tradval3
+ren  a58 tradval4
+ren  a59 tradval5
+ren  a60 tradval6
+ren  a61 tradval7
+ren  a62 tradval8
+ren  a63 tradval9
+ren  a64 tradval10
+ren  b49 latinperson1
+ren  b51 latinperson2
+ren e9 gender
+ren e10 age
+ren e12 marital
+ren e13 relhead
+ren e14 hhsize
+ren e15 occ
+ren e17 headocc
+ren e19 paocc
+ren e21 educ
+ren e22 paeduc
+ren e23 relig
+ren e24 howrelig
+ren e25 polviews
+ren e26 class
+ren e27 ethid
+ren e28 placeborn
+ren e30 reg15
+ren e32 region
+ren e34 commun
+ren e36 citysize
+ren e37 finc
+drop e38-e62
+save "Z:\spain\spainjan93_ren.dta",replace
