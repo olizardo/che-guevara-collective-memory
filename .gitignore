@@ -3,3 +3,5 @@
 *.Rout
 Rplots.pdf
 larson-lizardo-collective-memory-che-guevara-*.zip
+data/che_prem_recreated.dta
+data/che_final_recreated.dta
