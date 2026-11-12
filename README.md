@@ -18,7 +18,6 @@ The paper uses survey data from Spanish citizens to examine who recalls Che Guev
   - `R/analysis.R` — R translation of `che-analysis.do`: correspondence-analysis scores, postmaterialism and traditionalism scales, cohort curves for each figure, cohort Wald tests, and the logit models for recalling Che with cluster-robust standard errors.
 - `tables-figures/` — Tables and figures as prepared for the manuscript (Excel/Word/PowerPoint).
 - `figures/` — Figures produced by the R pipeline (`fig3_cohort_curves.png`).
-- `manuscript/` — Manuscript PDF.
 
 ## Reproducibility check against the published article
 
