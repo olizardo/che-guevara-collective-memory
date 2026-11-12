@@ -151,6 +151,36 @@ for (f in c(1, 4, 7, 8, 9, 10)) {
 }
 par(op); dev.off()
 
+# Figure 3 reproduction: odds of mentioning Che by cohort group, relative to
+# the overall odds (the published figure's odds are scaled so that 1 = the
+# sample-wide odds of mentioning Che)
+grp <- do.call(rbind, lapply(split(che$che, che$cohort10), function(x)
+  data.frame(n = sum(x), N = length(x),
+             odds = sum(x) / (length(x) - sum(x)))))
+grp$cohort <- as.integer(rownames(grp))
+grp$rel_odds <- grp$odds / (sum(che$che) / sum(che$che == 0))
+png(file.path(fig_dir, "fig3_odds_by_cohort_group.png"), width = 700, height = 500, res = 120)
+plot(grp$cohort, grp$rel_odds, type = "b", pch = 19,
+     xlab = "Cohort", ylab = "Odds of remembering (relative to overall)",
+     ylim = c(0, 1.6))
+abline(h = 1, lty = 2)
+dev.off()
+
+# Figure 1 partial reproduction: the published figure plots four series
+# (NYT articles, Library of Congress entries, Biblioteca Nacional de Espana,
+# El Pais) from 1955 to 2006, but the shipped files contain only two series
+# (m1, m2 as coded) for 1976-2004. Both show the post-1995 surge in Che
+# visibility that the paper describes.
+elpais <- read_dta(file.path(data_dir, "elpais.dta"))
+png(file.path(fig_dir, "fig1_news_mentions.png"), width = 700, height = 500, res = 120)
+matplot(elpais$year, as.matrix(elpais[c("m1", "m2")]), type = "b", pch = c(1, 16),
+        lty = c(2, 1), col = c("grey40", "black"),
+        xlab = "Year", ylab = "Che Guevara mentions",
+        main = "Che Guevara media mentions, 1976-2004 (m1/m2 as coded)")
+legend("topleft", legend = c("m1", "m2"), pch = c(1, 16), lty = c(2, 1),
+       col = c("grey40", "black"), bty = "n")
+dev.off()
+
 # ---------------------------------------------------------------- #
 # Cohort significance table: linear and quadratic Wald tests per figure
 # ---------------------------------------------------------------- #
