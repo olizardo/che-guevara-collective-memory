@@ -9,7 +9,7 @@ The paper uses survey data from Spanish citizens to examine who recalls Che Guev
 ## Contents
 
 - `data/raw/` — Raw monthly Spain survey files (`spainjan91.dta`, `spainjan92.dta`, `spainjan93.dta`, `spainjan93_ren.dta`).
-- `data/` — Intermediate and analysis datasets (`.dta`): `che_prem.dta` (pooled wide file), `che_final.dta` (long analysis file), plus `che.dta` and the El País newspaper mention counts (`elpais.dta`, `table.dta`).
+- `data/` — Shipped intermediate and analysis datasets (`.dta`): `che_prem.dta` (pooled wide file), `che_final.dta` (long analysis file), plus `che.dta` and the El País newspaper mention counts (`elpais.dta`, `table.dta`). The files the R pipeline writes (`che_prem_recreated.dta`, `che_final_recreated.dta`) are treated as build artifacts and not tracked.
 - `code/` — Original Stata do-files: `che-dataproc-latest.do` (data processing) and `che-analysis.do` (analysis). These reference hard-coded paths from the original research environment and need path edits to run as-is.
 - `old-do-files/` — Earlier and auxiliary do-files from the original research process, retained for provenance.
 - `R/` — R port of the full pipeline:
