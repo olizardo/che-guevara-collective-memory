@@ -123,12 +123,15 @@ pred_curve <- function(outcome) {
   })
 }
 
+fig_dir <- file.path(repo_root(), "figures")
+dir.create(fig_dir, showWarnings = FALSE)
+png(file.path(fig_dir, "fig3_cohort_curves.png"), width = 900, height = 1200, res = 120)
 op <- par(mfrow = c(3, 2), mar = c(4, 4, 2, 1))
 for (f in c(1, 4, 7, 8, 9, 10)) {
   plot(cohort_grid, pred_curve(f), type = "b", pch = 19,
        main = fig_names[f], xlab = "Cohort", ylab = "Predicted probability")
 }
-par(op)
+par(op); dev.off()
 
 # ---------------------------------------------------------------- #
 # Cohort significance table: linear and quadratic Wald tests per figure
@@ -195,8 +198,36 @@ miss_vars <- c("ccohort10", "yearvar", "numchoices", "tradfac", "postmatfac",
                "educrec", "polcat", "caregid")
 che$miss <- as.integer(rowSums(is.na(che[miss_vars])) > 0)
 
-# Block 1 (approximates Stata xi3:mfp logit che ..., cluster(id) aic)
-cat("\n--- Block 1: logit models for che ---\n")
+# ---------------------------------------------------------------- #
+# Table III replication (published models of remembering Che)
+#
+# Sample: complete cases on all model covariates, with "None"/"Don't know"
+# answers on the postmaterialism items treated as missing (the do-file's
+# commented-out recodes at the top of che-analysis.do).
+# The traditionalism factor score is standardized (mean 0, sd 1), as
+# described in the paper's footnote 5.
+# ---------------------------------------------------------------- #
+dk_none <- with(che, sppostmat1 %in% c(13, 14) | sppostmat2 %in% c(13, 14) |
+                  sppostmat3 %in% c(13, 14) |
+                  wrldpostmat1 %in% c(11, 12) | wrldpostmat2 %in% c(11, 12) |
+                  wrldpostmat3 %in% c(11, 12))
+t3 <- che[che$miss == 0 & !dk_none, ]
+t3$tradfac_z <- as.numeric(scale(t3$tradfac))
+
+cat("\n--- Table III: logistic regression coefficients for remembering Che ---\n")
+cat("N =", sum(complete.cases(t3[c("che", "ccohort10", "yearvar", "numchoices",
+                                    "postmat", "tradfac_z", "educ", "regid", "polcat")])), "\n")
+t3_1 <- robust_logit(che ~ ccohort10 + yearvar + numchoices, t3)
+t3_2 <- update(t3_1, . ~ . + postmat + tradfac_z)
+t3_3 <- update(t3_2, . ~ . + educ)
+t3_4 <- update(t3_3, . ~ . + regid + factor(polcat))
+for (mm in list(t3_1, t3_2, t3_3, t3_4)) show_fit(mm)
+
+# ---------------------------------------------------------------- #
+# Do-file Block 1 (kept for provenance; approximates the Stata
+# xi3:mfp specification, which uses a fractional-polynomial education term)
+# ---------------------------------------------------------------- #
+cat("\n--- Do-file Block 1: logit models for che ---\n")
 m1 <- robust_logit(che ~ ccohort10 + yearvar + numchoices, che)
 m2 <- update(m1, . ~ . + postmat + tradfac)
 m3 <- update(m2, . ~ . + educrec)
@@ -204,8 +235,8 @@ m4 <- update(m1, . ~ . + postmat + tradfac + educrec + left + caregid +
                ccohort10:educrec)
 for (mm in list(m1, m2, m3, m4)) show_fit(mm)
 
-# Block 2 (matches final published specification)
-cat("\n--- Block 2: logit models for che (complete cases, latinperson > 5) ---\n")
+# Do-file Block 2 (kept for provenance)
+cat("\n--- Do-file Block 2: logit models for che (complete cases, latinperson > 5) ---\n")
 sub <- che[che$miss != 1 & che$latinperson > 5, ]
 n1 <- robust_logit(che ~ ccohort_c + yearvar + numchoices, sub)
 n2 <- update(n1, . ~ . + tradfacbin + postmatscalbin)

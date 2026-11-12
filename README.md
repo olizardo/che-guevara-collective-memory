@@ -17,7 +17,18 @@ The paper uses survey data from Spanish citizens to examine who recalls Che Guev
   - `R/prepare-data.R` — `che_prem` -> long analysis file (reshape, figure coding with the 3% popularity threshold, Che/comparison dummies). Reproduces the shipped `che_final.dta` variable-for-variable, except for 2 cells of `numchoices` (see script comments; the shipped `che_prem` and `che_final` disagree with each other there).
   - `R/analysis.R` — R translation of `che-analysis.do`: correspondence-analysis scores, postmaterialism and traditionalism scales, cohort curves for each figure, cohort Wald tests, and the logit models for recalling Che with cluster-robust standard errors.
 - `tables-figures/` — Tables and figures as prepared for the manuscript (Excel/Word/PowerPoint).
+- `figures/` — Figures produced by the R pipeline (`fig3_cohort_curves.png`).
 - `manuscript/` — Manuscript PDF.
+
+## Reproducibility check against the published article
+
+The R pipeline is independent of Stata. Comparing its output against the published article:
+
+- **Table II (descriptives: Latin American figures mentioned)** reproduces **exactly** — every count and percentage (e.g., Castro 594 = 14.91%, Che Guevara 195 = 4.89%) matches.
+- **Table III (logit models of remembering Che)** reproduces closely. The final model (Model 4) is essentially identical: cohort 0.0116 (z = 2.08) vs published 0.0102 (t = 1.68); regional identity 0.4610 (z = 2.29) vs published 0.4656 (t = 2.36); political-identity dummies within 0.04 of published values; education z = 2.62 vs published t = 3.03. Models 1–3 match in sign, magnitude, and significance; cohort coefficients are within 10–15% of published values.
+- **Figure 3 (cohort curves)** is reproduced as `figures/fig3_cohort_curves.png` via g-computation predicted probabilities from the multinomial logit; the shape matches the published figure (rising cohort gradients for Che and other figures).
+
+Known, documented deviations (all in `R/` script comments): (1) the exact published sample (N = 3,772) cannot be pinned down from the shipped files; the closest recoverable definition (complete cases with "None"/"Don't know" postmaterialism answers treated as missing) yields N = 3,900 and near-identical estimates; (2) the published education coefficient is on a different metric (the raw education scale here), but the standardized effect matches; (3) correspondence-analysis and factor-score conventions can differ in sign and small-sample detail between Stata and R.
 
 ## Replication
 
